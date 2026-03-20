@@ -3,7 +3,7 @@ spring:
     name: saas-platform
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/saas_platform
+    url: jdbc:postgresql://localhost:5433/saas_platform
     username: saas_user
     password: saas_password
 
