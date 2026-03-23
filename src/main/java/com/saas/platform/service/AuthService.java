@@ -33,19 +33,26 @@ public class AuthService {
                 .toLowerCase()
                 .replaceAll("\\s+", "-");
 
-        Tenant tenant = Tenant.builder()
-                .name(request.getTenantName())
-                .slug(slug)
-                .active(true)
-                .build();
+        // Find existing tenant or create a new one
+        Tenant tenant = tenantRepository.findByName(request.getTenantName())
+                .orElseGet(() -> {
+                    Tenant newTenant = Tenant.builder()
+                            .name(request.getTenantName())
+                            .slug(slug)
+                            .active(true)
+                            .build();
+                    return tenantRepository.save(newTenant);
+                });
 
-        tenantRepository.save(tenant);
+        // First user in a tenant = ADMIN, everyone else = MEMBER
+        boolean isFirstUser = !userRepository.existsByTenantId(tenant.getId());
+        User.Role role = isFirstUser ? User.Role.ADMIN : User.Role.MEMBER;
 
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(User.Role.ADMIN)
+                .role(role)
                 .tenant(tenant)
                 .build();
 
@@ -61,7 +68,6 @@ public class AuthService {
                 .tenantName(tenant.getName())
                 .build();
     }
-
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

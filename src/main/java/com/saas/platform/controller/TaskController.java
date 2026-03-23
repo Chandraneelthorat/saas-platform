@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,8 +20,9 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    // POST /api/projects/{projectId}/tasks
+    // ADMIN and MEMBER can create
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBER')")
     public ResponseEntity<TaskResponse> createTask(
             @PathVariable Long projectId,
             @Valid @RequestBody TaskRequest request) {
@@ -28,23 +30,26 @@ public class TaskController {
                 .body(taskService.createTask(projectId, request));
     }
 
-    // GET /api/projects/{projectId}/tasks
+    // Everyone can read
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBER', 'VIEWER')")
     public ResponseEntity<List<TaskSummary>> getAllTasks(
             @PathVariable Long projectId) {
         return ResponseEntity.ok(taskService.getAllTasksForProject(projectId));
     }
 
-    // GET /api/projects/{projectId}/tasks/{taskId}
+    // Everyone can read
     @GetMapping("/{taskId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBER', 'VIEWER')")
     public ResponseEntity<TaskResponse> getTaskById(
             @PathVariable Long projectId,
             @PathVariable Long taskId) {
         return ResponseEntity.ok(taskService.getTaskById(projectId, taskId));
     }
 
-    // PUT /api/projects/{projectId}/tasks/{taskId}
+    // ADMIN and MEMBER can update
     @PutMapping("/{taskId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBER')")
     public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long projectId,
             @PathVariable Long taskId,
@@ -52,8 +57,9 @@ public class TaskController {
         return ResponseEntity.ok(taskService.updateTask(projectId, taskId, request));
     }
 
-    // DELETE /api/projects/{projectId}/tasks/{taskId}
+    // ONLY ADMIN can delete
     @DeleteMapping("/{taskId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteTask(
             @PathVariable Long projectId,
             @PathVariable Long taskId) {
