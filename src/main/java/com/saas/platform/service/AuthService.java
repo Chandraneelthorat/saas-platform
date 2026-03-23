@@ -23,6 +23,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -60,6 +61,12 @@ public class AuthService {
 
         String token = jwtService.generateToken(user.getEmail());
 
+        emailService.sendWelcomeEmail(
+                user.getEmail(),
+                user.getName(),
+                user.getTenant().getName()
+        );
+
         return AuthResponse.builder()
                 .token(token)
                 .email(user.getEmail())
@@ -68,6 +75,7 @@ public class AuthService {
                 .tenantName(tenant.getName())
                 .build();
     }
+
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

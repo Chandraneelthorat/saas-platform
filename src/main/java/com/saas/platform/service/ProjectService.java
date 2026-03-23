@@ -1,5 +1,7 @@
 package com.saas.platform.service;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import com.saas.platform.dto.ProjectRequest;
 import com.saas.platform.dto.ProjectResponse;
 import com.saas.platform.dto.ProjectSummary;
@@ -50,7 +52,7 @@ public class ProjectService {
     }
 
     // ── Get all projects for current user's tenant ───────────
-    public List<ProjectSummary> getAllProjects() {
+    @Cacheable(value = "projects", key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")    public List<ProjectSummary> getAllProjects() {
         User currentUser = getCurrentUser();
         return projectRepository
                 .findByTenantId(currentUser.getTenant().getId())
@@ -69,7 +71,7 @@ public class ProjectService {
     }
 
     // ── Update a project ─────────────────────────────────────
-    public ProjectResponse updateProject(Long projectId, ProjectRequest request) {
+    @CacheEvict(value = "projects", key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()")    public ProjectResponse updateProject(Long projectId, ProjectRequest request) {
         User currentUser = getCurrentUser();
         Project project = projectRepository
                 .findByIdAndTenantId(projectId, currentUser.getTenant().getId())
@@ -83,6 +85,7 @@ public class ProjectService {
     }
 
     // ── Delete a project ─────────────────────────────────────
+    @CacheEvict(value = "projects", key = "#root.authentication.name")
     public void deleteProject(Long projectId) {
         User currentUser = getCurrentUser();
         Project project = projectRepository
